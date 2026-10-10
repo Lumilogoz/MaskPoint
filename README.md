@@ -1,69 +1,145 @@
-| MaskPoint | Description |
-|---|---|
-| Overview | A native Python polygon annotation tool that saves binary PNG masks and editable image-pixel coordinates. |
-| Interface | Tkinter desktop window; no browser, server, account, network connection or machine-learning model. |
-| Origin | Extracted from the Bladder_AI annotation window and made independent of its paths and datasets. |
-| Scope | One polygon per image; no multi-class labels, automatic segmentation or inferred medical diagnosis. |
+# MaskPoint
 
-| Quick start | Command / requirement |
-|---|---|
-| Python | Python 3.10+ with a working Tcl/Tk installation. |
-| Install | `python -m pip install -r requirements.txt` |
-| Open the desktop app | `python annotator.py` — opens an empty editor with an editable image-folder field. |
-| Specify a folder | `python annotator.py "/path/to/images"` |
-| Regression check | `python test_annotation.py` — creates synthetic fixtures only and opens no visible window. |
-| Tested locally | macOS with a working Conda Python/Tk environment; other operating systems have not been verified. |
-| Tk troubleshooting | Tkinter is part of the Python distribution, not a pip dependency; Linux may need its distribution's `python3-tk` package. |
+**Draw a polygon on an image. Drag its points. Save a binary mask and editable coordinates.**
 
-| Where to set or change the image path | Instructions |
-|---|---|
-| Recommended: inside the app | Start `python annotator.py`, paste your image directory into **Image folder** at the top, then click **Open** or press **Enter**. |
-| Choose instead of typing | Click **Browse…**, select the directory containing your images, and it opens automatically. |
-| Change folders later | Replace the text in **Image folder** and click **Open** again; no restart is required. Unsaved polygon edits require confirmation before switching. |
-| Folder, not an image file | Enter the directory containing your JPG/PNG images, not the filename of one image and not the `labels/` directory. |
-| Path with spaces | Paste the path directly into the app **without surrounding quotes**; for a terminal command, enclose it in double quotes. |
-| Command-line alternative | In `python annotator.py "/path/to/images"`, replace **`/path/to/images`** with your own image directory. This preloads the same editable field. |
-| Example command | `python annotator.py "/path/to/My Images"` |
-| Home and relative paths | `~/Pictures/My Images` expands to your home directory; a relative path is resolved from the terminal's current working directory. |
-| Editing Python source | **Not required.** There is no machine-specific dataset path to change in `annotator.py`; use the GUI field or command-line argument. |
-| Invalid input | A nonexistent, empty or unsupported image folder shows an error without replacing the previously loaded folder. |
-| Where outputs go | A flat folder `/path/to/My Images` gets `/path/to/My Images/labels/<stem>.png` and `<stem>.json`; a group with `images/` gets sibling `labels/`. |
+MaskPoint is a lightweight **desktop image-annotation tool** for preparing binary image-segmentation datasets. You choose your own image folder, manually outline one object per image, and export the annotation at the original image resolution.
 
-| Input / output | Convention |
-|---|---|
-| Images | JPG, JPEG, PNG, BMP, TIFF and WebP; decoded by Pillow. |
-| Flat layout | Select a directory containing images; outputs go in its `labels/` directory. |
-| Grouped layout | Select a parent whose immediate subdirectories contain images; each group gets its own `labels/` directory. |
-| Optional images directory | A group may contain `images/` plus sibling `labels/`; the tool uses that group's `images/` directory. |
-| Discovery boundary | No recursive dataset scan; hidden files, labels, archives and overlay directories are excluded. |
-| Duplicate stems | Images such as `sample.jpg` and `sample.png` in one group are rejected because they would share an output filename. |
-| Mask | `labels/<image_stem>.png`; grayscale L mode, 0 = background, 255 = polygon interior; original image dimensions. |
-| Points | `labels/<image_stem>.json`; image/mask names, dimensions, `image_pixels` coordinate system and editable `[x, y]` points. |
-| Existing annotations | Matching point JSON is reloaded; a PNG without JSON can be displayed but cannot recover its original clicked vertices. |
-| Saving edits | Saving intentionally replaces the current image's PNG/JSON pair; source images are never changed. Both outputs are staged first, with rollback on a caught replacement error. |
-| Durability limit | The pair is not a database transaction; keep backups, particularly against power loss or failure during rollback. |
+It runs locally with Python, Tkinter and Pillow — **no browser, server, account or AI model required**.
 
-| Controls | Action |
-|---|---|
-| Image folder / Open | Type or paste a directory path; Open or Enter loads it. |
-| Browse… | Select and open an image directory using the native folder chooser. |
-| Left click | Add a polygon vertex; clicking an existing vertex starts a drag. |
-| Drag | Move a vertex; coordinates are clamped to the image. |
-| Left / Right | Previous / next image. |
-| Z | Undo the last point. |
-| C | Clear the editable polygon. |
-| S / Save button | Save the binary mask and point JSON. |
-| Double click | Save; at least three points are required. |
-| Drawing | Green boundary and draggable dots; no filled preview polygon. |
-| Reloaded mask | Red overlay over the source image. |
-| Keyboard focus | Typing into the path field does not trigger annotation shortcuts. Save before changing images; unsaved edits are not retained by previous/next navigation. |
+## Interface
 
-| Repository | Contents / policy |
+![MaskPoint desktop interface showing the image-folder field, image list, draggable polygon and save controls](docs/maskpoint-ui.png)
+
+*Actual running application with a generated, non-medical demo image. Green dots are editable polygon vertices; the red overlay shows the saved mask. No patient images or private datasets are included.*
+
+## What you can do
+
+- **Open your images:** type a folder path or use the native **Browse…** chooser.
+- **Annotate an object:** click along its boundary, then drag points to refine the outline.
+- **Save both formats:** a binary PNG mask for segmentation and a JSON file for reopening the editable polygon.
+- **Track your progress:** navigate the image list and see which images have saved annotations.
+
+## Installation and launch
+
+### Requirements
+
+- Python **3.10+** with a working **Tcl/Tk** installation.
+- Pillow, installed by the command below.
+
+```bash
+git clone https://github.com/Lumilogoz/MaskPoint.git
+cd MaskPoint
+python -m pip install -r requirements.txt
+python annotator.py
+```
+
+The app opens with an empty editor. You do **not** need to edit the Python source to configure your images.
+
+> Tkinter is provided by your Python installation, not by `pip`. Some Linux distributions require `python3-tk`. On macOS, use a Python environment with working Tk support, such as a suitable Conda installation. The app has been tested locally on macOS; other operating systems have not been verified.
+
+## Annotate your first image
+
+1. **Choose a folder.** Paste the directory containing your images into **Image folder**, then click **Open** or press **Enter**. Alternatively, click **Browse…**.
+2. **Select an image.** Pick it from the list on the left.
+3. **Draw the outline.** Click around the object to add polygon vertices. Add at least three points.
+4. **Adjust the boundary.** Click and drag an existing green dot. Use **Undo point** or **Clear** if needed.
+5. **Save.** Click **Save mask + points** or press **S**. The app writes the PNG/JSON pair and displays the saved mask as a red overlay.
+6. **Continue.** Use **Next**, **Previous**, or the image list. Saved point JSON is reloaded when you reopen an image.
+
+> **Save before changing images.** Unsaved edits are not retained by Previous/Next or image-list navigation. Switching to another image folder asks for confirmation if there are unsaved polygon edits.
+
+### Where to set the image path
+
+Use the **Image folder** field at the top of the window. You can replace it and click **Open** at any time; no restart is needed.
+
+You can also preload a folder from the terminal:
+
+```bash
+python annotator.py "/path/to/My Images"
+```
+
+- Replace `/path/to/My Images` with **your own image directory**, not an individual image file or the `labels/` folder.
+- In the terminal, quote a path containing spaces. **Inside the app, paste the path without surrounding quotes.**
+- `~` expands to your home directory; relative paths are resolved from the terminal's current working directory.
+- A nonexistent, empty or unsupported folder shows an error without replacing the previously loaded folder.
+
+## Inputs and saved files
+
+Supported image formats: **JPG/JPEG, PNG, BMP, TIFF and WebP**.
+
+### Simple folder
+
+Select `my-images/`. Labels are saved next to the source images in its `labels/` subfolder:
+
+```text
+my-images/
+├── sample-01.jpg
+├── sample-02.jpg
+└── labels/
+    ├── sample-01.png
+    └── sample-01.json
+```
+
+### Grouped dataset
+
+You may select a parent directory whose immediate subfolders contain images. Each group gets its own `labels/` folder. A group can also use an `images/` subfolder:
+
+```text
+my-dataset/
+├── group-a/
+│   ├── images/
+│   │   └── sample-01.jpg
+│   └── labels/
+│       ├── sample-01.png
+│       └── sample-01.json
+└── group-b/
+    └── sample-02.jpg
+```
+
+The scan is limited to the selected folder and its immediate groups; it does not recursively search arbitrary nested datasets. Hidden files and annotation/archive/overlay folders are excluded.
+
+### Output formats
+
+| File | Contents |
 |---|---|
-| `annotator.py` | Standalone program and annotation file handling. |
-| `test_annotation.py` | Editable folder input/switching, discovery, save/reload, rollback, real Tk/ImageTk and coordinate-drag checks. |
-| `requirements.txt` | Pillow is the only pip dependency. |
-| `.gitignore` | Excludes local datasets, annotations, images, environments and secrets. |
-| `LICENSE` | MIT license for the program; it does not grant rights to any external image or dataset. |
-| Privacy | No real ultrasound images, patient information, annotations, model weights or account credentials are included. |
-| GitHub | [Lumilogoz/MaskPoint](https://github.com/Lumilogoz/MaskPoint) — public source code under the MIT license; datasets and annotations are not included. |
+| `labels/<image_stem>.png` | Single-channel `L` image at the original width and height: **0 = background, 255 = polygon interior**. |
+| `labels/<image_stem>.json` | Image/mask filenames, original dimensions, `image_pixels` coordinate system and editable `[x, y]` vertices. |
+
+Saving replaces the current image's existing PNG/JSON annotation pair; **the source image is never changed**. Both files are staged before replacement, with rollback on a caught replacement error. This is not a database transaction: keep backups against power loss or rollback failure.
+
+## Controls
+
+| Control | Action |
+|---|---|
+| **Open / Enter** | Load the folder entered in the path field. |
+| **Browse…** | Choose and open an image folder. |
+| **Left click** | Add a vertex, or select an existing vertex to drag. |
+| **Drag** | Move a vertex; coordinates stay inside the image. |
+| **Previous / Next** or **← / →** | Change images. |
+| **Undo point / Z** | Remove the last point. |
+| **Clear / C** | Clear the editable polygon. |
+| **Save mask + points / S** or **double click** | Save both outputs; at least three points are required. |
+
+Typing in the image-path field does not trigger annotation shortcuts.
+
+## Scope and limitations
+
+- **One polygon per image**, with one foreground class. No multi-class labels, multiple objects or holes.
+- Manual annotation only: **no automatic segmentation, model training or medical diagnosis**.
+- While drawing, the app shows a green outline and vertices, not a filled preview. A saved mask appears as a red overlay.
+- A mask PNG alone cannot recover the original clicked points. Reopening an editable polygon requires its matching JSON.
+- Duplicate image stems within one group, such as `sample.jpg` and `sample.png`, are rejected because their output filenames would collide.
+
+## Regression check
+
+```bash
+python test_annotation.py
+```
+
+The check uses generated fixtures and a hidden Tk window. It covers folder input and switching, click/drag, binary masks, point JSON, save/reload, shortcut isolation and failed-save rollback. It does not modify a real dataset.
+
+## License and privacy
+
+The program and synthetic UI screenshot are published under the **[MIT License](LICENSE)**.
+
+No real medical images, patient information, dataset annotations, model weights or account credentials are distributed with this repository. The software license does **not** grant rights to external images or datasets; use only data you are authorized to annotate.

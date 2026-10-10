@@ -21,3 +21,6 @@ overlays/
 *.tiff
 *.webp
 *.json
+
+# Permit only the synthetic-data application screenshot used in the README.
+!docs/maskpoint-ui.png
